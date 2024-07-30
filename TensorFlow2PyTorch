@@ -1,0 +1,855 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "ab89d885-8951-4c1b-9b3b-ec2cec1ee7e6",
+   "metadata": {},
+   "source": [
+    "## Lab 1: Intro to PyTorch and Music Generation with RNNs\n",
+    "\n",
+    "This Jupyter notebook is part of the MIT Introduction to Deep Learning course, reimagined using PyTorch, a popular deep learning library known for its dynamic computation graph and ease of use. This lab introduces the user to the basics of PyTorch and demonstrates its application in defining and training neural networks.\n",
+    "\n",
+    "### Part 1: Introduction to PyTorch\n",
+    "- **Installation and Setup:** The lab begins with instructions on installing PyTorch and essential dependencies, highlighting PyTorch's straightforward interface and dynamic computational graph capabilities.\n",
+    "- **Understanding Tensors:** Students are introduced to tensors in PyTorch, which are similar to multi-dimensional arrays. The lab covers how to create tensors, understand their shapes and ranks, and manipulate them using PyTorch's comprehensive tensor operations.\n",
+    "\n",
+    "### Part 2: Neural Networks in PyTorch\n",
+    "- **Defining Layers and Networks:** The lab explores defining simple neural network layers using `torch.nn.Module` and `torch.nn.Sequential`. It explains how to construct a neural network, focusing on layers like `nn.Linear` for dense (fully connected) layers and `nn.Sigmoid` for activation functions.\n",
+    "- **Custom Layers and Subclassing:** The lab dives into creating custom neural network models by subclassing `torch.nn.Module`. This approach provides flexibility for defining custom behaviors, such as unique forward passes and layer configurations.\n",
+    "- **Sequential vs. Subclassing:** Students learn the differences between using `nn.Sequential` and subclassing `nn.Module` to build models, understanding the benefits and use cases for each method.\n",
+    "\n",
+    "### Part 3: Automatic Differentiation and Training\n",
+    "- **Autograd for Automatic Differentiation:** The lab covers PyTorch's autograd system, which automatically computes gradients for tensor operations. This feature is essential for training neural networks using backpropagation.\n",
+    "- **Gradient Descent Optimization:** Students implement a simple gradient descent optimization algorithm, reinforcing their understanding of how gradients are used to update model parameters and minimize loss functions.\n",
+    "\n",
+    "### Practical Applications and Exercises\n",
+    "By the end of the lab, you will have gained a comprehensive understanding of PyTorch, including working with tensors, building neural networks, and leveraging PyTorch's dynamic computation graph for efficient model training. This foundation will equip you with the skills necessary to tackle more complex deep learning tasks and projects using PyTorch.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fc2080ec-57a7-48f2-ad25-196df6b7734f",
+   "metadata": {},
+   "source": [
+    "## Lab 1: Intro to PyTorch and Music Generation with RNNs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "f0434a49-b659-43f5-8030-09f305578b2c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "import regex as re\n",
+    "import subprocess\n",
+    "import urllib\n",
+    "import numpy as np\n",
+    "import torch\n",
+    "\n",
+    "from IPython.display import Audio\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a7bf4d84-ffb2-4bae-92b0-d4c553decc02",
+   "metadata": {},
+   "source": [
+    "PyTorch does not have a separate data type for strings, so we'll handle them as Python strings or use different approaches based on the context.Strings in PyTorch: PyTorch does not have a dedicated string tensor type. Instead, strings are handled as regular Python strings. If you need to process strings in a tensor-like manner, you can convert them to indices using tokenization techniques.\n",
+    "\n",
+    "Numeric Tensors: For numeric constants, you can use torch.tensor with the appropriate dtype, as shown with number.\n",
+    "\n",
+    "Rank of Tensor: In PyTorch we use the .dim() method of a tensor, which gives the number of dimensions. Since sport is handled as a regular string, we use len(sport) to represent the length of the string.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "0b09d6fd-d9a4-451e-b530-58e34013ead6",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "`sport` is a 6-character string.\n",
+      "`number` is a 0-d Tensor\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define the constants\n",
+    "sport = \"Tennis\"  # PyTorch does not support string tensors; handle as a regular string\n",
+    "number = torch.tensor(1.41421356237, dtype=torch.float64)\n",
+    "\n",
+    "# PyTorch doesn't have a direct equivalent for tf.rank for strings, but we can use len(sport) for its length.\n",
+    "print(f\"`sport` is a {len(sport)}-character string.\")\n",
+    "print(f\"`number` is a {number.dim()}-d Tensor\")\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6085b415-08c4-4c02-8043-92c5189e8643",
+   "metadata": {},
+   "source": [
+    "Handling Strings: In PyTorch strings are typically handled as Python lists or other Python structures. If you need to work with string data in a tensor-like fashion, consider using techniques like tokenization, converting strings to indices, or using character-level encoding.\n",
+    "\n",
+    "Numeric Tensors: Numeric data can be represented directly as tensors using torch.tensor. The dtype is specified similarly, using dtype=torch.float64 for 64-bit floating-point numbers.\n",
+    "\n",
+    "Tensor Shape and Rank: In PyTorch, .shape gives the shape of the tensor, and .dim() provides the rank (number of dimensions) of the tensor. For the list of strings (sports), we simply mention that it is a list and use len(sports) to indicate the number of elements."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "af567449-b2eb-49bb-b86b-25012ffc4092",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "`sports` is a list with 2 elements.\n",
+      "`numbers` is a 1-d Tensor with shape: torch.Size([3])\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define the tensors\n",
+    "sports = [\"Tennis\", \"Basketball\"]  # Handle as a Python list of strings\n",
+    "numbers = torch.tensor([3.141592, 1.414213, 2.71821], dtype=torch.float64)\n",
+    "\n",
+    "# Print the shape and rank\n",
+    "# For the list of strings, we simply state that it is a list and provide the number of elements\n",
+    "print(f\"`sports` is a list with {len(sports)} elements.\")\n",
+    "print(f\"`numbers` is a {numbers.dim()}-d Tensor with shape: {numbers.shape}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e3f27719-0712-43a8-b69a-b98a478cc709",
+   "metadata": {},
+   "source": [
+    "Creating the Tensor: The torch.tensor function is used to create a tensor from the given list of lists. This is analogous to tf.constant in TensorFlow.\n",
+    "\n",
+    "Checking Tensor Type: We use isinstance(matrix, torch.Tensor) to verify that matrix is indeed a PyTorch tensor.\n",
+    "\n",
+    "Checking Tensor Rank: The matrix.dim() method returns the number of dimensions (rank) of the tensor, similar to tf.rank(matrix).numpy() in TensorFlow."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "541d31d2-59de-4d94-98e1-aa4bb65c12a4",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "matrix:\n",
+      "tensor([[1., 2., 3., 4.],\n",
+      "        [5., 6., 7., 8.]])\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define a 2-d Tensor\n",
+    "matrix = torch.tensor([[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]])\n",
+    "\n",
+    "# Check that matrix is a torch Tensor and has rank 2\n",
+    "assert isinstance(matrix, torch.Tensor), \"matrix must be a torch Tensor object\"\n",
+    "assert matrix.dim() == 2, \"matrix must be a 2-d tensor\"\n",
+    "\n",
+    "print(f\"matrix:\\n{matrix}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "74813337-cb73-4ee4-ba28-18882b6486bd",
+   "metadata": {},
+   "source": [
+    "    Creating the 4D Tensor: In PyTorch, torch.zeros([10, 256, 256, 3]) creates a 4-dimensional tensor filled with zeros. The dimensions [10, 256, 256, 3] correspond to 10 images, each with a height and width of 256 pixels and 3 color channels (RGB).\n",
+    "\n",
+    "    Checking Tensor Type: The isinstance(images, torch.Tensor) check ensures that images is a PyTorch tensor.\n",
+    "\n",
+    "    Checking Tensor Rank: The images.dim() method returns the number of dimensions of the tensor. We expect this to be 4.\n",
+    "\n",
+    "    Checking Tensor Shape: The shape of the tensor is verified using images.shape, ensuring it matches [10, 256, 256, 3].\n",
+    "\n",
+    "This PyTorch code snippet initializes a 4D tensor with zeros, akin to a batch of 10 RGB images of size 256x256 pixels, and verifies its properties."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "1b7a7709-facd-42c2-9558-1bc664f3267b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "images shape: torch.Size([10, 256, 256, 3])\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define a 4-d Tensor\n",
+    "# This represents 10 images, each of size 256x256 with 3 color channels (RGB)\n",
+    "images = torch.zeros([10, 256, 256, 3])\n",
+    "\n",
+    "# Check that images is a torch Tensor and has rank 4\n",
+    "assert isinstance(images, torch.Tensor), \"images must be a torch Tensor object\"\n",
+    "assert images.dim() == 4, \"images must be of rank 4\"\n",
+    "assert list(images.shape) == [10, 256, 256, 3], \"images is incorrect shape\"\n",
+    "\n",
+    "print(f\"images shape: {images.shape}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "aa20fc2b-d8f1-458f-8244-64a6da4ace90",
+   "metadata": {},
+   "source": [
+    "1.2 Computations on Tensors\n",
+    "\n",
+    "A convenient way to think about and visualize computations in PyTorch is in terms of graphs. We can define this graph in terms of Tensors, which hold data, and the mathematical operations that act on these Tensors in some order. Let's look at a simple example, and define this computation using PyTorch:\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7c4324c3-c347-4fd7-8625-e717ff048aa2",
+   "metadata": {},
+   "source": [
+    "Creating Tensors: In PyTorch, you create tensors using torch.tensor. Here, a and b are tensors with the values 15 and 61, respectively.\n",
+    "\n",
+    "Adding Tensors:\n",
+    "    torch.add(a, b) adds the tensors a and b and assigns the result to c1.\n",
+    "    a + b is an alternative way to add tensors in PyTorch, as the + operator is overridden to handle tensor addition. The result is assigned to c2.\n",
+    "\n",
+    "Printing Results: The values of c1 and c2 are printed, both of which should output 76, as the addition of 15 and 61 equals 76.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "f6b28924-6ed9-4c30-8165-afd14ac68fd6",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "tensor(76)\n",
+      "tensor(76)\n"
+     ]
+    }
+   ],
+   "source": [
+    "import torch\n",
+    "\n",
+    "# Create the tensors and initialize values\n",
+    "a = torch.tensor(15)\n",
+    "b = torch.tensor(61)\n",
+    "\n",
+    "# Add them!\n",
+    "c1 = torch.add(a, b)\n",
+    "c2 = a + b  # PyTorch also overrides the \"+\" operator for tensors\n",
+    "\n",
+    "print(c1)\n",
+    "print(c2)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ba622395-2c8b-411a-bf41-8cdc20f4268f",
+   "metadata": {},
+   "source": [
+    "Creating the Function: The function func(a, b) takes two tensors a and b as inputs.\n",
+    "\n",
+    "Addition (c):\n",
+    "\n",
+    "    c = torch.add(a, b) computes the element-wise addition of tensors a and b. This is equivalent to tf.add(a, b) in TensorFlow.\n",
+    "\n",
+    "Subtraction (d):\n",
+    "\n",
+    "    d = torch.subtract(b, 1) subtracts 1 from each element in tensor b. This is equivalent to tf.subtract(b, 1) in TensorFlow.\n",
+    "\n",
+    "Multiplication (e):\n",
+    "\n",
+    "    e = torch.multiply(c, d) performs element-wise multiplication of tensors c and d. This is equivalent to tf.multiply(c, d) in TensorFlow."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0e2f9c30-8585-40e3-a893-0f96ecf0ba87",
+   "metadata": {},
+   "source": [
+    "Now, we can call this function to execute the computation graph given some inputs a,b:\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "7116b79a-f2ec-412c-9e2b-a190d6c3ea47",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "tensor(6.)\n"
+     ]
+    }
+   ],
+   "source": [
+    "import torch\n",
+    "\n",
+    "# Define the computation function\n",
+    "def func(a, b):\n",
+    "    '''Define the operation for c, d, e using torch.add, torch.subtract, torch.multiply.'''\n",
+    "    c = torch.add(a, b)       # Equivalent to tf.add(a, b)\n",
+    "    d = torch.subtract(b, 1)  # Equivalent to tf.subtract(b, 1)\n",
+    "    e = torch.multiply(c, d)  # Equivalent to tf.multiply(c, d)\n",
+    "    return e\n",
+    "\n",
+    "# Consider example values for a, b\n",
+    "a, b = 1.5, 2.5\n",
+    "\n",
+    "# Convert a and b to tensors\n",
+    "a_tensor = torch.tensor(a)\n",
+    "b_tensor = torch.tensor(b)\n",
+    "\n",
+    "# Execute the computation\n",
+    "e_out = func(a_tensor, b_tensor)\n",
+    "print(e_out)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "662ee0b6-cdff-4381-b5df-3ec5e20394a8",
+   "metadata": {},
+   "source": [
+    "## Neural networks in PyTorch"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f9878209-de2b-4d40-bb7c-30f1ef944eaf",
+   "metadata": {},
+   "source": [
+    "Tensors can flow through abstract types called Layers -- the building blocks of neural networks. Layers implement common neural networks operations, and are used to update weights, compute losses, and define inter-layer connectivity. We will first define a Layer to implement the simple perceptron defined above."
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "id": "a87ce904-d597-4a4f-adf1-985b86e2d2e2",
+   "metadata": {},
+   "source": [
+    "Class Definition:\n",
+    "\n",
+    "We define a custom dense layer OurDenseLayer by subclassing torch.nn.Module.\n",
+    "In the __init__ method, n_output_nodes is set as an instance variable, but we do not initialize W and b here because we'll do this in the build method.\n",
+    "\n",
+    "Parameter Initialization (build method):\n",
+    "\n",
+    "In PyTorch, you typically define weights and biases in the __init__ method, we define a build method where W and b are initialized.\n",
+    "nn.Parameter is used to mark these tensors as parameters of the module. This means they will be considered by PyTorch during optimization.\n",
+    "\n",
+    "Forward Pass (forward method):\n",
+    "\n",
+    "The forward method is where the computation happens. It takes an input tensor x and computes z using torch.matmul(x, self.W) + self.b.\n",
+    "The output y is obtained by applying the sigmoid activation function using torch.sigmoid(z).\n",
+    "\n",
+    "Random Seed and Layer Initialization:\n",
+    "\n",
+    "We set a random seed using torch.manual_seed(1) for reproducibility.\n",
+    "The layer instance layer is created with 3 output nodes.\n",
+    "We simulate the build phase by manually calling the build method, though in practice PyTorch initializes parameters during the first forward pass.\n",
+    "\n",
+    "Input and Output:\n",
+    "\n",
+    "x_input is defined as a tensor, and the forward method is called to compute the output y.\n",
+    "y.detach().numpy() is used to convert the output tensor to a NumPy array for easier printing."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "66012129-54fb-466e-8aad-41e47f33a6d5",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[0.59416693 0.43654308 0.21446949]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "import torch.nn as nn\n",
+    "import torch.nn.functional as F\n",
+    "\n",
+    "# Define the custom dense layer class\n",
+    "class OurDenseLayer(nn.Module):\n",
+    "    def __init__(self, n_output_nodes):\n",
+    "        super(OurDenseLayer, self).__init__()\n",
+    "        self.n_output_nodes = n_output_nodes\n",
+    "        self.W = None\n",
+    "        self.b = None\n",
+    "\n",
+    "    def build(self, input_shape):\n",
+    "        d = int(input_shape[-1])\n",
+    "        # Define and initialize parameters: a weight matrix W and bias b\n",
+    "        # Note that parameter initialization is random!\n",
+    "        self.W = nn.Parameter(torch.randn(d, self.n_output_nodes))\n",
+    "        self.b = nn.Parameter(torch.randn(1, self.n_output_nodes))\n",
+    "\n",
+    "    def forward(self, x):\n",
+    "        '''Define the operation for z and y'''\n",
+    "        z = torch.matmul(x, self.W) + self.b\n",
+    "        y = torch.sigmoid(z)\n",
+    "        return y\n",
+    "\n",
+    "# Set random seed for reproducibility\n",
+    "torch.manual_seed(1)\n",
+    "\n",
+    "# Create an instance of the layer\n",
+    "layer = OurDenseLayer(3)\n",
+    "\n",
+    "# Manually call the build method to initialize weights\n",
+    "layer.build((1, 2))\n",
+    "\n",
+    "# Define input tensor\n",
+    "x_input = torch.tensor([[1, 2.]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass\n",
+    "y = layer.forward(x_input)\n",
+    "\n",
+    "# Test the output\n",
+    "print(y.detach().numpy())\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a7a96efe-d2d9-451b-aa44-a666a43dbfa4",
+   "metadata": {},
+   "source": [
+    "In PyTorch, you can use the nn.Sequential module to stack layers in a similar way to TensorFlow's Keras Sequential API. Here’s how you can define a simple neural network with a single dense (fully connected) layer using nn.Sequential:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "29576914-d697-4082-be88-1886814121d8",
+   "metadata": {},
+   "source": [
+    "Importing Required Modules:\n",
+    "\n",
+    "    torch: The main library for PyTorch.\n",
+    "    torch.nn: A sub-library containing modules and loss functions.\n",
+    "\n",
+    "Defining the Neural Network:\n",
+    "\n",
+    "    nn.Sequential is used to define a sequence of layers. Each layer's output serves as the next layer's input.\n",
+    "    nn.Linear(in_features, out_features): This layer applies a linear transformation to the input data, i.e., y=xAT+by=xAT+b. Here, in_features is the size of each input sample, and out_features is the size of each output sample.\n",
+    "    nn.Sigmoid(): This applies the sigmoid activation function element-wise, which squashes the output to a range between 0 and 1.\n",
+    "\n",
+    "Printing the Model Structure:\n",
+    "\n",
+    "    The print(model) statement shows the architecture of the model, displaying the layers in the order they were added.\n",
+    "\n",
+    "Example Input Tensor:\n",
+    "\n",
+    "    x_input is defined as a 2D tensor with shape (1, 2), representing a single input sample with 2 features.\n",
+    "\n",
+    "Forward Pass:\n",
+    "\n",
+    "    y_output = model(x_input): This line performs the forward pass through the network. The input tensor is passed through each layer sequentially.\n",
+    "\n",
+    "Output:\n",
+    "\n",
+    "    print(y_output): This prints the output tensor, which is the result after passing through the linear transformation and the sigmoid activation."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3fa81fe0-ba81-44ae-aacc-20c113093460",
+   "metadata": {},
+   "source": [
+    "# Define a simple neural network using nn.Sequential\n",
+    "model = nn.Sequential(\n",
+    "    nn.Linear(in_features=2, out_features=3),\n",
+    "    nn.Sigmoid()\n",
+    ")\n",
+    "\n",
+    "# Print the model structure\n",
+    "print(model)\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass\n",
+    "y_output = model(x_input)\n",
+    "\n",
+    "# Print the output\n",
+    "print(y_output)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "7668d33c-b57d-4507-95c5-e2d42a28f12f",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Sequential(\n",
+      "  (dense_layer): Linear(in_features=2, out_features=3, bias=True)\n",
+      "  (activation): Sigmoid()\n",
+      ")\n",
+      "tensor([[0.6207, 0.9025, 0.1084]], grad_fn=<SigmoidBackward0>)\n"
+     ]
+    }
+   ],
+   "source": [
+    "import torch\n",
+    "import torch.nn as nn\n",
+    "\n",
+    "# Define the number of outputs\n",
+    "n_output_nodes = 3\n",
+    "\n",
+    "# First define the model using nn.Sequential\n",
+    "model = nn.Sequential()\n",
+    "\n",
+    "# Define a dense (fully connected) layer\n",
+    "# Remember: in PyTorch, nn.Linear handles both W (weights) and b (bias)\n",
+    "dense_layer = nn.Linear(in_features=2, out_features=n_output_nodes)\n",
+    "\n",
+    "# Add the dense layer to the model\n",
+    "model.add_module(\"dense_layer\", dense_layer)\n",
+    "\n",
+    "# Add an activation function (Sigmoid in this case)\n",
+    "model.add_module(\"activation\", nn.Sigmoid())\n",
+    "\n",
+    "# Print the model to see the structure\n",
+    "print(model)\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass\n",
+    "y_output = model(x_input)\n",
+    "\n",
+    "# Print the output\n",
+    "print(y_output)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9347204f-4624-4b15-b67c-d20b6b7e56b1",
+   "metadata": {},
+   "source": [
+    "Importing PyTorch Modules:\n",
+    "\n",
+    "    torch and torch.nn are imported to use PyTorch's tensor operations and neural network modules.\n",
+    "\n",
+    "Defining the Model:\n",
+    "\n",
+    "    model = nn.Sequential(): A sequential container for stacking layers.\n",
+    "    nn.Linear(in_features=2, out_features=n_output_nodes): A fully connected layer with 2 input features and 3 output nodes.\n",
+    "    nn.Sigmoid(): A sigmoid activation function is added to the model.\n",
+    "\n",
+    "Example Input Tensor:\n",
+    "\n",
+    "    x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32): This defines the input tensor with shape (1, 2), representing one input sample with two features.\n",
+    "\n",
+    "Feeding Input into the Model:\n",
+    "\n",
+    "    model_output = model(x_input).detach().numpy(): This line feeds the input tensor into the model and computes the output. The detach() method is used to separate the output from the computation graph (which is not necessary for this example but is good practice when converting to NumPy), and .numpy() converts the tensor to a NumPy array for easier handling or printing.\n",
+    "\n",
+    "Output:\n",
+    "\n",
+    "    print(model_output): This prints the output of the model."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "id": "6d9df195-7139-4831-a8ed-943396b9c44b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[0.42321217 0.34873796 0.57636577]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define the number of outputs\n",
+    "n_output_nodes = 3\n",
+    "\n",
+    "# First define the model using nn.Sequential\n",
+    "model = nn.Sequential()\n",
+    "\n",
+    "# Define a dense (fully connected) layer\n",
+    "dense_layer = nn.Linear(in_features=2, out_features=n_output_nodes)\n",
+    "\n",
+    "# Add the dense layer to the model\n",
+    "model.add_module(\"dense_layer\", dense_layer)\n",
+    "\n",
+    "# Add an activation function (Sigmoid in this case)\n",
+    "model.add_module(\"activation\", nn.Sigmoid())\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Test the model with the example input\n",
+    "model_output = model(x_input).detach().numpy()\n",
+    "print(model_output)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c7401f4a-0ae9-4ef5-b4e9-fb2ab8cdcf23",
+   "metadata": {},
+   "source": [
+    "To define a neural network using subclassing in PyTorch, you can subclass torch.nn.Module and define the layers and the forward pass within the class. This method offers more flexibility than using nn.Sequential, as it allows for more complex architectures and custom behaviors."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "id": "23ec42e3-5a23-4b45-a34b-665591c713ba",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CustomModel(\n",
+      "  (dense): Linear(in_features=2, out_features=3, bias=True)\n",
+      "  (activation): Sigmoid()\n",
+      ")\n",
+      "[[0.75172305 0.19163872 0.44390368]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define a custom neural network class\n",
+    "class CustomModel(nn.Module):\n",
+    "    def __init__(self, n_output_nodes):\n",
+    "        super(CustomModel, self).__init__()\n",
+    "        # Define the dense (fully connected) layer\n",
+    "        self.dense = nn.Linear(in_features=2, out_features=n_output_nodes)\n",
+    "        # Define the activation function\n",
+    "        self.activation = nn.Sigmoid()\n",
+    "\n",
+    "    def forward(self, x):\n",
+    "        # Define the forward pass\n",
+    "        x = self.dense(x)\n",
+    "        x = self.activation(x)\n",
+    "        return x\n",
+    "\n",
+    "# Define the number of output nodes\n",
+    "n_output_nodes = 3\n",
+    "\n",
+    "# Instantiate the model\n",
+    "model = CustomModel(n_output_nodes)\n",
+    "\n",
+    "# Print the model structure\n",
+    "print(model)\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass\n",
+    "model_output = model(x_input).detach().numpy()\n",
+    "print(model_output)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "id": "a234a419-b298-48b1-ad7a-2bd9f1498b70",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "SubclassModel(\n",
+      "  (dense_layer): Linear(in_features=2, out_features=3, bias=True)\n",
+      "  (activation): Sigmoid()\n",
+      ")\n",
+      "[[0.54511744 0.20448305 0.758056  ]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Define the custom model class using subclassing\n",
+    "class SubclassModel(nn.Module):\n",
+    "    def __init__(self, n_output_nodes):\n",
+    "        super(SubclassModel, self).__init__()\n",
+    "        '''Define the model's single Dense layer'''\n",
+    "        self.dense_layer = nn.Linear(in_features=2, out_features=n_output_nodes)\n",
+    "        self.activation = nn.Sigmoid()\n",
+    "\n",
+    "    # Define the forward pass\n",
+    "    def forward(self, inputs):\n",
+    "        x = self.dense_layer(inputs)\n",
+    "        return self.activation(x)\n",
+    "\n",
+    "# Define the number of output nodes\n",
+    "n_output_nodes = 3\n",
+    "\n",
+    "# Instantiate the model\n",
+    "model = SubclassModel(n_output_nodes)\n",
+    "\n",
+    "# Print the model structure\n",
+    "print(model)\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass\n",
+    "model_output = model(x_input).detach().numpy()\n",
+    "print(model_output)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "807a887c-57ce-4178-ae55-2e142b4ad587",
+   "metadata": {},
+   "source": [
+    "Subclassing nn.Module:\n",
+    "\n",
+    "    The IdentityModel class inherits from torch.nn.Module. In the constructor (__init__), a dense layer is defined using nn.Linear, followed by an activation function, nn.Sigmoid.\n",
+    "\n",
+    "forward Method:\n",
+    "\n",
+    "    The forward method defines the forward pass of the network. It takes inputs and an optional isidentity flag.\n",
+    "    If isidentity is True, the method returns the inputs unchanged, simulating an identity operation.\n",
+    "    Otherwise, the inputs are passed through the dense layer followed by the sigmoid activation function, and the result is returned.\n",
+    "\n",
+    "Model Instantiation:\n",
+    "\n",
+    "    model = IdentityModel(n_output_nodes) creates an instance of the IdentityModel with n_output_nodes outputs.\n",
+    "\n",
+    "Input Tensor:\n",
+    "\n",
+    "    x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32) defines an example input tensor.\n",
+    "\n",
+    "Forward Pass:\n",
+    "\n",
+    "    The model is tested in two scenarios:\n",
+    "        With isidentity=False, the model processes the input through the dense layer and activation.\n",
+    "        With isidentity=True, the model returns the input tensor as is.\n",
+    "\n",
+    "Output:\n",
+    "\n",
+    "    The outputs are printed for both normal processing and identity processing scenarios."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "3989ed75-2688-4d68-9741-200a34bf3742",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Output with normal processing:\n",
+      "tensor([[0.3715, 0.2644, 0.2480]], grad_fn=<SigmoidBackward0>)\n",
+      "Output with identity processing:\n",
+      "tensor([[1., 2.]])\n"
+     ]
+    }
+   ],
+   "source": [
+    "class IdentityModel(nn.Module):\n",
+    "    def __init__(self, n_output_nodes):\n",
+    "        super(IdentityModel, self).__init__()\n",
+    "        # Define the dense layer\n",
+    "        self.dense_layer = nn.Linear(in_features=2, out_features=n_output_nodes)\n",
+    "        self.activation = nn.Sigmoid()\n",
+    "\n",
+    "    def forward(self, inputs, isidentity=False):\n",
+    "        # Apply the dense layer followed by sigmoid activation\n",
+    "        x = self.activation(self.dense_layer(inputs))\n",
+    "        # If isidentity is True, return the inputs unchanged\n",
+    "        if isidentity:\n",
+    "            return inputs\n",
+    "        return x\n",
+    "\n",
+    "# Define the number of output nodes\n",
+    "n_output_nodes = 3\n",
+    "\n",
+    "# Instantiate the model\n",
+    "model = IdentityModel(n_output_nodes)\n",
+    "\n",
+    "# Example input tensor\n",
+    "x_input = torch.tensor([[1.0, 2.0]], dtype=torch.float32)\n",
+    "\n",
+    "# Perform the forward pass without identity behavior\n",
+    "output_normal = model(x_input, isidentity=False)\n",
+    "print(f\"Output with normal processing:\\n{output_normal}\")\n",
+    "\n",
+    "# Perform the forward pass with identity behavior\n",
+    "output_identity = model(x_input, isidentity=True)\n",
+    "print(f\"Output with identity processing:\\n{output_identity}\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b611b513-44b8-4b25-b63e-cbe4fd16e759",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "69c558ec-2440-4b23-9766-4143ef24d0eb",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.19"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

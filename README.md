@@ -1,4 +1,12 @@
-# Biotech Application of Neural Networks using PyTorch
+## ProteinSequence.ipynb Notebook : Protein Classifier based on their sequences
+
+The ProteinSequence.ipynb notebook includes a project that uses machine learning to classify proteins based on their sequences. The code processes data from protein files, extracts key characteristics, and then uses a neural network to predict which functional category each protein belongs to. It leverages modern computing techniques, including GPU acceleration if available, to enhance processing speed.
+  
+## Why It Matters
+
+Proteins are crucial in biology and medicine, and understanding their functions can lead to breakthroughs in fields like drug discovery and disease treatment. This project automates a part of this understanding process, making it faster and potentially more accurate than manual analysis. It's a step towards leveraging technology to solve complex biological problems, making science more accessible and impactful.
+
+## ProteinSolubility.ipynb Notebook:  Prediction Application using Neural Networks with PyTorch
 
 This project demonstrates the application of a neural network for predicting protein solubility using PyTorch. The dataset used is from the UCI Machine Learning Repository, focusing on predicting protein solubility based on various features.
 

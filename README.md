@@ -1,4 +1,4 @@
-## TensorFlow2PyTorch.ipynb Notebook : MIT Deep Learning Course done in PyTorch
+## TensorFlow2PyTorch_1.ipynb Notebook : MIT Deep Learning Course done in PyTorch
 This Jupyter notebook is part of the MIT Introduction to Deep Learning course, reimagined using PyTorch, a popular deep learning library known for its dynamic computation graph and ease of use. This lab introduces the user to the basics of PyTorch and demonstrates its application in defining and training neural networks.
 
 ## ProteinSequence.ipynb Notebook : Protein Classifier based on their sequences

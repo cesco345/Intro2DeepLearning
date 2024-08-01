@@ -1,3 +1,6 @@
+## MusicGenerationRNN_2.ipynb Notebook : MIT Deep Learning Course done in PyTorch
+The original course materials were provided in TensorFlow, a popular deep learning framework. I converted the entire project to PyTorch, another widely-used deep learning library known for its dynamic computational graph and ease of use. This conversion not only will broaden our understanding of different machine learning frameworks but will also showcase the flexibility and adaptability required in real-world AI projects.
+
 ## TensorFlow2PyTorch_1.ipynb Notebook : MIT Deep Learning Course done in PyTorch
 This Jupyter notebook is part of the MIT Introduction to Deep Learning course, reimagined using PyTorch, a popular deep learning library known for its dynamic computation graph and ease of use. This lab introduces the user to the basics of PyTorch and demonstrates its application in defining and training neural networks.
 

@@ -1,3 +1,7 @@
+## MNIST_DigitsComputerVision.ipynb Notebook: MIT Deep Learning Course done in PyTorch
+### Introduction to MNIST Digit Classification with CNNs
+This Jupyter notebook is part of the MIT Introduction to Deep Learning course version 2024.  The original course materials were provided in TensorFlow, a popular deep learning framework. I converted the entire project to PyTorch, another widely-used deep learning library known for its dynamic computational graph and ease of use.This notebook demonstrates the process of building, training, and evaluating a Convolutional Neural Network (CNN) for classifying handwritten digits using the MNIST dataset. The MNIST dataset is a benchmark dataset in machine learning and computer vision, consisting of 60,000 training images and 10,000 test images of handwritten digits (0-9).
+
 ## MusicGenerationRNN_2.ipynb Notebook : MIT Deep Learning Course done in PyTorch
 This Jupyter notebook is part of the MIT Introduction to Deep Learning course version 2024.  The original course materials were provided in TensorFlow, a popular deep learning framework. I converted the entire project to PyTorch, another widely-used deep learning library known for its dynamic computational graph and ease of use. This conversion not only will broaden our understanding of different machine learning frameworks but will also showcase the flexibility and adaptability required in real-world AI projects.
 
